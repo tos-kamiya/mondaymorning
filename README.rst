@@ -35,3 +35,18 @@ The output will looks like the following::
 
 Each line means one of following actions: file creation/modification, file removal, web browsing.
 
+=============
+Installation
+=============
+
+(Mondaymoring is tested on Ubuntu 12.04 beta amd64.)
+
+To install depending packages::
+
+  $ sudo apt-get install python python-sqlite trash-cli
+
+The trash-cli package is Gnome Trash-can for command line.
+This package is optional to mondaymorning, however, 
+I recommend to install it and use the 'trash' command in deleting files, instead of 'mv',
+because trash-can enables to track a history of deleted files.
+
