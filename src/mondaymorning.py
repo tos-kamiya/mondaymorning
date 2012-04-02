@@ -12,58 +12,96 @@ import subprocess
 import time
 import urllib2
 
-HOME_DIRECTORY = os.environ['HOME']
-PROJECT_FILES = (".progject", "Makefile")
+HOME_DIRECTORY = u"" + os.environ['HOME']
+PROJECT_FILES = (u".progject", u"Makefile")
 
 
 def is_dot_file(f):
-    return f.startswith(".")
+    return f.startswith(u".")
 
 
-def safe_stat(p):
+def safe_stat_time(p):
     try:
-        return os.stat(p)
+        s = os.stat(p)
     except:
-        return None
+        return 0
+    return max(s[stat.ST_MTIME], s[stat.ST_CTIME])
+
+
+def merge_paths_by_directory_structure(L):
+    tdfs = []
+    lastA, lastD = None, None
+    for a, p in L:
+        d, f = os.path.split(p)
+        if not d:
+            d, f = p, u""  # warning: "." is split into ("", "."), instead of (".", "")
+        if a != lastA or p != lastD:
+            tdfs.append((a, d, f))
+        lastA, lastD = a, d
+    mergedPaths = []
+    for k, g in itertools.groupby(tdfs, lambda adf: adf[:2]):
+        items = list(g)
+        d = k[1]
+        if d != u'/':
+            d = d + u'/'
+        if len(items) == 1:
+            f = items[0][2]
+            mergedPaths.append((k[0], d + f))
+        else:
+            fs = u"{%s}" % u",".join(item[2] for item in items)
+            mergedPaths.append((k[0], d + fs))
+    return mergedPaths
+
+
+def normalize_filepath(path):
+    if path.startswith(HOME_DIRECTORY + "/"):
+        return u"~" + path[len(HOME_DIRECTORY):]
+    return path
 
 
 def get_filesystem_history(target_dirs):
-    result = []
-    timeFields = (stat.ST_MTIME, stat.ST_CTIME)
-    accumulateTargetStack = []
-    for root, dirs, files in itertools.chain(*map(os.walk, target_dirs)):
-        accumulateTagetForTheDir = (root, [])
-        accumulateTargetStackPushed = False
+    timestampTable = {}
+        
+    def max_timestamp(directory, target):
+        try:    
+            files = os.listdir(directory)
+        except OSError:
+            return
+        files = [f for f in files if f not in (u".", u"..")]
         for f in files:
+            p = os.path.join(directory, f)
             if f in PROJECT_FILES:
-                projectPath = os.path.join(root, f)
-                accumulateTargetStack.append((projectPath, []))
-                accumulateTargetStackPushed = True
-                break # for f
-        try:
-            t = accumulateTagetForTheDir if not accumulateTargetStack else accumulateTargetStack[-1]
-            s = safe_stat(root)
-            if s:
-                t[1].extend(s[field] for field in timeFields)
-            for f in files:
-                p = os.path.join(root, f)
-                s = safe_stat(p)
-                if s:
-                    t[1].extend(s[field] for field in timeFields)
-            if t is accumulateTagetForTheDir and t[1]:
-                result.append((max(t[1]), t[0].decode('utf-8')))
-        finally:
-            if accumulateTargetStackPushed:
-                t = accumulateTargetStack.pop()
-                if t[1]:
-                    result.append((max(t[1]), t[0].decode('utf-8')))
-        dirs[:] = [d for d in dirs if not is_dot_file(d)]
+                target = p
+        curTarget = target if target else directory
+        for f in files:
+            p = os.path.join(directory, f)
+            if os.path.isfile(p):
+                t = safe_stat_time(p)
+                if t:
+                    mt = timestampTable.get(curTarget, 0)
+                    timestampTable[curTarget] = max(mt, t)
+            elif os.path.islink(p):
+                pass
+            elif os.path.isdir(p):
+                if not is_dot_file(f):
+                    t = safe_stat_time(p)
+                    if t:
+                        mt = timestampTable.get(curTarget, 0)
+                        timestampTable[curTarget] = max(mt, t)
+                        max_timestamp(p, target)
+    
+    for d in target_dirs:
+        max_timestamp(d.decode('utf-8'), None)
+    
+    result = [(mt, normalize_filepath(p)) for p, mt in timestampTable.iteritems()]
+    result.sort(reverse=True)
+    result = merge_paths_by_directory_structure(result)
     return result
 
 
 def get_trash_history():
     result = []
-    pat = re.compile(r"^(\d+)-(\d+)-(\d+)[ \t]+(\d+):(\d+):(\d+)[ \t]+(.*)")
+    pat = re.compile(ur"^(\d+)-(\d+)-(\d+)[ \t]+(\d+):(\d+):(\d+)[ \t]+(.*)")
     output = subprocess.check_output(["list-trash"])
     for L in output.decode('utf-8').split('\n'):
         m = pat.match(L)
@@ -100,9 +138,12 @@ def normalize_url(url):
 
     if url.endswith("/"):
         url = url[:-1]
+    m = re.match("^https?://(.*)", url)
+    if m:
+        url = m.group(1)
     
     # google search
-    m = re.match("^https?://www.google.[^/]+/search[?].*", url)
+    m = re.match("^www[.]google[.][^/]+/search[?].*", url)
     if m:
         r = get_keyvalue_in_url("q", url)
         if not r:
@@ -110,21 +151,30 @@ def normalize_url(url):
         return u" ".join(r)
     
     # google search result's links
-    m = re.match("^https?://www.google.[^/]+/url[?].*", url)
+    m = re.match("^www[.]google[.][^/]+/url[?].*", url)
     if m:
         r = get_keyvalue_in_url("url", url)
         if not r:
             return url
+        if len(r) == 1:
+            return r[0][4:] # drop "url="
         return u" ".join(r)
 
     # youtube
-    m = re.match("^https?://www.youtube.com/watch[?].*", url)
+    m = re.match("^www[.]youtube[.]com/watch[?].*", url)
     if m:
         r = get_keyvalue_in_url("v", url)
         if not r:
             return url
         return u" ".join(r)
     
+    # twitter
+    m = re.match("twitter[.]com/#!/(.*)", url)
+    if m:
+        return u"twitter.com/" + m.group(1)
+    else:
+        return url
+        
     # others
     return url
 
@@ -165,7 +215,7 @@ Opition
   --version: shows version.
 """[1:-1]
 
-VERSION = (0, 1, 0)
+VERSION = (0, 1, 1)
 
 
 def format_time(t):
@@ -260,12 +310,12 @@ def main():
                 items[:] = items[:i]
                 break # for i
     
-    lastKU = None
-    for t, k, u in items:
-        ku = (k, u)
-        if ku != lastKU:
-            writefunc(u"%s %s %s\n" % (format_time(t), k, u))
-            lastKU = ku
+    for lastItem, item in zip([(None, None, None)] + items, items):
+        lastT, lastK, lastU = lastItem
+        t, k, u = item
+        if not (k == lastK and u == lastU):
+            if lastU is None or not lastU.startswith(u):
+                writefunc(u"%s %s %s\n" % (format_time(t), k, u))
 
 
 if __name__ == '__main__':
