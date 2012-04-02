@@ -248,13 +248,13 @@ def main():
             if v == "-":
                 duaration = 0
             duaration = int(v)
-        elif k == "C":
+        elif k == "-C":
             optionChromium = False
-        elif k == "F":
+        elif k == "-F":
             optionFirefox = False
-        elif k == "T":
+        elif k == "-T":
             optionTrash = False
-        elif k == "H":
+        elif k == "-H":
             targetDirs = [d for d in targetDirs if d != "~"]
         else:
             assert False
