@@ -13,7 +13,11 @@ import time
 import urllib2
 
 HOME_DIRECTORY = u"" + os.environ['HOME']
-PROJECT_FILES = (u".progject", u"Makefile")
+PROJECT_FILES = (
+     u".progject", # Eclipse project 
+     u"Makefile", # makefile
+     u"build.xml", # Ant
+)
 
 
 def is_dot_file(f):
@@ -143,7 +147,7 @@ def normalize_url(url):
         url = m.group(1)
     
     # google search
-    m = re.match("^www[.]google[.][^/]+/search[?].*", url)
+    m = re.match("^(scholar|www)[.]google[.][^/]+/(scholar|search)[?].*", url)
     if m:
         r = get_keyvalue_in_url("q", url)
         if not r:
@@ -169,10 +173,14 @@ def normalize_url(url):
         return u" ".join(r)
     
     # twitter
-    m = re.match("twitter[.]com/#!/(.*)", url)
+    m = re.match("^twitter[.]com", url)
     if m:
-        return u"twitter.com/" + m.group(1)
-    else:
+        r = get_keyvalue_in_url("original_referer", url)
+        if r:
+            return u" ".join(r)
+        m = re.match("^twitter[.]com/#!/(.*)", url)
+        if m:
+            return u"twitter.com/" + m.group(1)
         return url
         
     # others
