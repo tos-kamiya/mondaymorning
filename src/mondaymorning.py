@@ -63,36 +63,51 @@ def normalize_filepath(path):
     return path
 
 
+def listdir(directory):
+    try:    
+        files = os.listdir(directory)
+    except OSError:
+        return None
+    files = [f for f in files if f not in (".", "..")]
+    fileFnames, dirFnames = [], []
+    for f in files:
+        p = os.path.join(directory, f)
+        if os.path.isfile(p):
+            fileFnames.append(f)
+        elif os.path.islink(p):
+            pass
+        elif os.path.isdir(p):
+            dirFnames.append(f)
+    return fileFnames, dirFnames
+
+
 def get_filesystem_history(target_dirs):
     timestampTable = {}
         
     def max_timestamp(directory, target):
-        try:    
-            files = os.listdir(directory)
-        except OSError:
+        r = listdir(directory)
+        if r is None:
             return
-        files = [f for f in files if f not in (u".", u"..")]
-        for f in files:
-            p = os.path.join(directory, f)
+        fileFnames, dirFnames = r
+        for f in fileFnames:
             if f in PROJECT_FILES:
-                target = p
+                target = directory + "*"
+                break # for f
         curTarget = target if target else directory
-        for f in files:
+        for f in fileFnames:
             p = os.path.join(directory, f)
-            if os.path.isfile(p):
+            t = safe_stat_time(p)
+            if t:
+                mt = timestampTable.get(curTarget, 0)
+                timestampTable[curTarget] = max(mt, t)
+        for f in dirFnames:
+            if not is_dot_file(f):
+                p = os.path.join(directory, f)
                 t = safe_stat_time(p)
                 if t:
                     mt = timestampTable.get(curTarget, 0)
                     timestampTable[curTarget] = max(mt, t)
-            elif os.path.islink(p):
-                pass
-            elif os.path.isdir(p):
-                if not is_dot_file(f):
-                    t = safe_stat_time(p)
-                    if t:
-                        mt = timestampTable.get(curTarget, 0)
-                        timestampTable[curTarget] = max(mt, t)
-                        max_timestamp(p, target)
+                    max_timestamp(p, target)
     
     for d in target_dirs:
         max_timestamp(d.decode('utf-8'), None)
