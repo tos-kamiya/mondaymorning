@@ -82,9 +82,13 @@ def listdir(directory):
 
 
 def get_filesystem_history(target_dirs):
+    doneDirSet = set()
     timestampTable = {}
         
     def max_timestamp(directory, target):
+        if directory in doneDirSet:
+            return
+        doneDirSet.add(directory)
         r = listdir(directory)
         if r is None:
             return
@@ -251,7 +255,7 @@ Opition
   --version: shows version.
 """[1:-1]
 
-VERSION = (0, 1, 1)
+VERSION = (0, 1, 2)
 
 
 def format_time(t):
