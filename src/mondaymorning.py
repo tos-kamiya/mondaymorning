@@ -21,7 +21,7 @@ PROJECT_FILES = (
 
 
 def is_dot_file(f):
-    return f.startswith(u".")
+    return f not in (".", "..") and f.startswith(u".")
 
 
 def safe_stat_time(p):
@@ -147,40 +147,53 @@ def normalize_url(url):
         url = m.group(1)
     
     # google search
-    m = re.match("^(scholar|www)[.]google[.][^/]+/(scholar|search)[?].*", url)
+    m = re.match("^(www[.]google[.][^/]+/search[?]).*", url)
+    if not m:
+        m = re.match("^(www[.]google[.][^/]+/#).*", url)
+    if not m:
+        m = re.match("^(scholar[.]google[.][^/]+/scholar[?]).*", url)
     if m:
         r = get_keyvalue_in_url("q", url)
-        if not r:
+        if r:
+            return m.group(1) + u"&".join(r)
+        else:
             return url
-        return u" ".join(r)
     
     # google search result's links
-    m = re.match("^www[.]google[.][^/]+/url[?].*", url)
-    if m:
+    if re.match("^www[.]google[.][^/]+/url[?].*", url):
         r = get_keyvalue_in_url("url", url)
-        if not r:
+        if r:
+            if len(r) == 1:
+                return r[0][4:] # drop "url="
+            return u" ".join(r)
+        else:
             return url
-        if len(r) == 1:
-            return r[0][4:] # drop "url="
-        return u" ".join(r)
 
     # youtube
-    m = re.match("^www[.]youtube[.]com/watch[?].*", url)
-    if m:
+    if re.match("^www[.]youtube[.]com/watch[?].*", url):
         r = get_keyvalue_in_url("v", url)
-        if not r:
+        if r:
+            return u"www.youtube.com/watch?" + u"&".join(r)
+        else:
             return url
-        return u" ".join(r)
+
+    # youtube search
+    if re.match("^www[.]youtube[.]com/results[?]search_query=", url):
+        r = get_keyvalue_in_url("search_query", url)
+        if r:
+            return u"www.youtube.com/results?" + u"&".join(r)
+        else:
+            return url
     
     # twitter
-    m = re.match("^twitter[.]com", url)
-    if m:
+    if re.match("^twitter[.]com", url):
         r = get_keyvalue_in_url("original_referer", url)
         if r:
             return u" ".join(r)
-        m = re.match("^twitter[.]com/#!/(.*)", url)
-        if m:
-            return u"twitter.com/" + m.group(1)
+        else:
+            m = re.match("^twitter[.]com/#!/(.*)", url)
+            if m:
+                return u"twitter.com/" + m.group(1)
         return url
         
     # others
