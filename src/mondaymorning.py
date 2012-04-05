@@ -285,7 +285,8 @@ def main():
         elif k == "-d":
             if v == "-":
                 duaration = 0
-            duaration = int(v)
+            else:
+                duaration = int(v)
         elif k == "-C":
             optionChromium = False
         elif k == "-F":
