@@ -43,5 +43,41 @@ class Test(unittest.TestCase):
         url = u"""twitter.com/#!/tos_kamiya/123"""
         self.assertEqual(mm.normalize_url(url), u"""twitter.com/tos_kamiya/123""")
 
+    def test_merge_url_by_last_param(self):
+        urls = [
+            (1, "http://hoge.com/view=itemname&page=1"), 
+            (1, "http://hoge.com/view=itemname&page=2")
+        ]
+        mergedUrls = mm.merge_url_by_last_param(urls)
+        self.assertEqual(mergedUrls, [
+            (1, "http://hoge.com/view=itemname&{page=1,page=2}"), 
+        ])
+        
+        urls = [
+            (1, "http://hoge.com/view=itemname&page=1"), 
+            (2, "http://hoge.com/view=itemname&page=2")
+        ]
+        mergedUrls = mm.merge_url_by_last_param(urls)
+        self.assertEqual(mergedUrls, urls)
+
+        urls = [
+            (1, "http://hoge.com/view=itemname&page=1"), 
+            (1, "http://hoge.com/view=itemname&date=2")
+        ]
+        mergedUrls = mm.merge_url_by_last_param(urls)
+        self.assertEqual(mergedUrls, [
+            (1, "http://hoge.com/view=itemname&{page=1,date=2}"), 
+        ])
+        
+        urls = [
+            (1, "http://hoge.com/view=itemname&page=1"), 
+            (1, "http://hoge.com/view=anotheritem&page=2")
+        ]
+        mergedUrls = mm.merge_url_by_last_param(urls)
+        self.assertEqual(mergedUrls, [
+            (1, "http://hoge.com/view=itemname&page=1"), 
+            (1, "http://hoge.com/view=anotheritem&page=2")
+        ])
+        
 if __name__ == "__main__":
     unittest.main()

@@ -81,7 +81,7 @@ def listdir(directory):
     return fileFnames, dirFnames
 
 
-def get_filesystem_history(target_dirs):
+def get_filesystem_history(target_dirs, truncate_time=None):
     doneDirSet = set()
     timestampTable = {}
         
@@ -102,6 +102,7 @@ def get_filesystem_history(target_dirs):
             p = os.path.join(directory, f)
             t = safe_stat_time(p)
             if t:
+                t = t if truncate_time is None else truncate_time(t)
                 mt = timestampTable.get(curTarget, 0)
                 timestampTable[curTarget] = max(mt, t)
         for f in dirFnames:
@@ -109,6 +110,7 @@ def get_filesystem_history(target_dirs):
                 p = os.path.join(directory, f)
                 t = safe_stat_time(p)
                 if t:
+                    t = t if truncate_time is None else truncate_time(t)
                     mt = timestampTable.get(curTarget, 0)
                     timestampTable[curTarget] = max(mt, t)
                     max_timestamp(p, target)
@@ -122,16 +124,17 @@ def get_filesystem_history(target_dirs):
     return result
 
 
-def get_trash_history():
+def get_trash_history(truncate_time=None):
     result = []
     pat = re.compile(ur"^(\d+)-(\d+)-(\d+)[ \t]+(\d+):(\d+):(\d+)[ \t]+(.*)")
     output = subprocess.check_output(["list-trash"])
     for L in output.decode('utf-8').split('\n'):
         m = pat.match(L)
         if m:
-            a = time.mktime(datetime.datetime(*[int(m.group(i)) for i in range(1, 6 + 1)]).timetuple())
+            t = time.mktime(datetime.datetime(*[int(m.group(i)) for i in range(1, 6 + 1)]).timetuple())
+            t = t if truncate_time is None else truncate_time(t)
             path = m.group(7)
-            result.append((a, path))
+            result.append((t, path))
     return result
 
 
@@ -217,7 +220,30 @@ def normalize_url(url):
     return url
 
 
-def get_firefox_history():
+def merge_url_by_last_param(L):
+    tdfs = []
+    for t, url in L:
+        i = url.rfind('&')
+        if i >= 0:
+            d, f = url[:i + 1], url[i + 1:]
+            tdfs.append((t, d, f))
+        else:
+            d, f = url, ''
+            tdfs.append((t, d, f))
+    mergedUrls = []
+    for k, g in itertools.groupby(tdfs, lambda adf: adf[:2]):
+        items = list(g)
+        d = k[1]
+        if len(items) == 1:
+            f = items[0][2]
+            mergedUrls.append((k[0], d + f))
+        else:
+            fs = u"{%s}" % u",".join(item[2] for item in items)
+            mergedUrls.append((k[0], d + fs))
+    return mergedUrls
+
+
+def get_firefox_history(truncate_time=None):
     dbFileCandidates = glob.glob(os.path.join(HOME_DIRECTORY, 
             ".mozilla/firefox/*.default/places.sqlite"))
     query = u"select last_visit_date, url from moz_places"
@@ -225,19 +251,22 @@ def get_firefox_history():
         return row[0] is not None
     timeUrlList = []
     for f in dbFileCandidates:
-        for a, url in extract_from_db_it(f, query, is_valid_row):
+        for t, url in extract_from_db_it(f, query, is_valid_row):
             u = normalize_url(url)
-            timeUrlList.append((a // 1000000, u))
+            t = t // 1000000
+            t = t if truncate_time is None else truncate_time(t)
+            timeUrlList.append((t, u))
     return timeUrlList
 
 
-def get_chromium_history():
+def get_chromium_history(truncate_time=None):
     dbFile = os.path.join(HOME_DIRECTORY, ".config/chromium/Default/History")
     query = u"select last_visit_time, url from urls"
     timeUrlList = []
-    for a, url in extract_from_db_it(dbFile, query):
+    for t, url in extract_from_db_it(dbFile, query):
         u = normalize_url(url)
-        timeUrlList.append((a, u))
+        t = t if truncate_time is None else truncate_time(t)
+        timeUrlList.append((t, u))
     return timeUrlList
 
 
@@ -246,6 +275,7 @@ Usage: mondaymoring [OPTIONS] <directory>...
   Searches recent working items: the files that you were editing, the urls you were browsing.
 Opition
   -d <num>: duaration. searches histories in num days (3). '-' for infinite.
+  -s: uses second as time resolution, instead of minute.
   -C: no Chromium history.
   -F: no Firefox history.
   -H: no home directory's history.
@@ -254,11 +284,7 @@ Opition
   --version: shows version.
 """[1:-1]
 
-VERSION = (0, 1, 2)
-
-
-def format_time(t):
-    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(t))
+VERSION = (0, 2, 0)
 
 
 def main():
@@ -272,10 +298,11 @@ def main():
     optionChromium = True
     optionFirefox = True
     optionTrash = True
+    timeResolution = 'min'
     duaration = 3
     targetDirs = ['~']
     
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hCFHTW", ["help", "version"])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hsCFHTW", ["help", "version"])
     for k, v in opts:
         if k in ("-h", "--help"):
             writefunc(USAGE + u"\n")
@@ -299,6 +326,8 @@ def main():
         elif k == "-W":
             optionChromium = False
             optionFirefox = False
+        elif k == "-s":
+            timeResolution = 'sec'
         else:
             assert False
     targetDirs.extend(args)
@@ -313,35 +342,46 @@ def main():
             uniqs.append(g.next())
         return uniqs
     
-    tus = get_filesystem_history(targetDirs)
+    if timeResolution == 'min':
+        def truncate_time(t):
+            return t - time.localtime(t).tm_sec
+        def format_time(t):
+            return time.strftime("%Y-%m-%d %H:%M", time.localtime(t))
+    else:
+        truncate_time = None
+        def format_time(t):
+            return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(t))
+        
+    tus = get_filesystem_history(targetDirs, truncate_time=truncate_time)
     uniqueTus = unique_urls(tus)
     items.extend((t, "file", u) for t, u in uniqueTus)
 
     if optionTrash:
         try:
-            tus = get_trash_history()
+            tus = get_trash_history(truncate_time=truncate_time)
             uniqueTus = unique_urls(tus)
             items.extend((t, "trash", u) for t, u in uniqueTus)
         except OSError as e:
             logfunc("failure in extracting Trash history: %s\n" % repr(e))
             logfunc("> (trash-cli has not been installed yet?)\n")
 
+    tus = []
     if optionFirefox:
         try:
-            tus = get_firefox_history()
-            uniqueTus = unique_urls(tus)
-            items.extend((t, "web", u) for t, u in uniqueTus)
+            tus.extend(get_firefox_history(truncate_time=truncate_time))
         except sqlite3.OperationalError as e:
             logfunc("failure in extracting Firefox history: %s\n" % repr(e))
 
     if optionChromium:
         try:
-            tus = get_chromium_history()
-            uniqueTus = unique_urls(tus)
-            items.extend((t, "web", u) for t, u in uniqueTus)
+            tus.extend(get_chromium_history(truncate_time=truncate_time))
         except sqlite3.OperationalError as e:
             logfunc("failure in extracting Chromium history: %s\n" % repr(e))
             logfunc("> (Chromium is running? Close Chromium before invoke mondaymorning)\n")
+
+    uniqueTus = unique_urls(tus)
+    mergedTus = merge_url_by_last_param(sorted(uniqueTus))
+    items.extend((t, "web", u) for t, u in mergedTus)
     
     items.sort(reverse=True)
     if duaration and items:
