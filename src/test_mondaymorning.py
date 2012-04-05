@@ -40,7 +40,8 @@ class Test(unittest.TestCase):
         url = u"""http://www.youtube.com/results?search_query=thomas&oq=thomas&aq=f&aqi=p-p1g9&aql=&gs_l=youtube-psuggest.3..35i39j0l9.79967l80756l0l80955l6l6l0l0l0l0l88l479l6l6l0."""
         self.assertEqual(mm.normalize_url(url), u"""www.youtube.com/results?search_query=thomas""")
         
-        #TODO: add url normalization samples for twitter
+        url = u"""twitter.com/#!/tos_kamiya/123"""
+        self.assertEqual(mm.normalize_url(url), u"""twitter.com/tos_kamiya/123""")
 
 if __name__ == "__main__":
     unittest.main()
