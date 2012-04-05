@@ -250,6 +250,7 @@ Opition
   -F: no Firefox history.
   -H: no home directory's history.
   -T: no Gnome Trash history.
+  -W: same as -C -F.
   --version: shows version.
 """[1:-1]
 
@@ -274,7 +275,7 @@ def main():
     duaration = 3
     targetDirs = ['~']
     
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hCFHT", ["help", "version"])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hCFHTW", ["help", "version"])
     for k, v in opts:
         if k in ("-h", "--help"):
             writefunc(USAGE + u"\n")
@@ -295,6 +296,9 @@ def main():
             optionTrash = False
         elif k == "-H":
             targetDirs = [d for d in targetDirs if d != "~"]
+        elif k == "-W":
+            optionChromium = False
+            optionFirefox = False
         else:
             assert False
     targetDirs.extend(args)
