@@ -10,14 +10,14 @@ To use `mondaymorning`, just type "python mondaymorning.py" at command line.
 The output will looks like the following::
 
   $ python mondaymorning.py
-  2012-04-02 17:22:41 file ~/bin
-  2012-04-02 17:22:41 file /home/toshihiro
-  2012-04-02 17:08:14 web www.python.jp/doc/release/library/os.path.html#module-os.path
-  2012-04-02 16:18:12 web www.python.jp/doc/2.4/lib/module-os.path.html
-  2012-04-02 16:18:08 web q=python+os.path
-  2012-04-02 13:49:14 web www.python.jp/doc/nightly/library/time.html#time.mktime
-  2012-04-02 13:48:44 web q=python+time+mktime
-  2012-04-02 13:39:11 trash /home/toshihiro/Downloads/tmp1
+  2012-04-02 17:22 file ~/bin
+  2012-04-02 17:22 file /home/toshihiro
+  2012-04-02 17:08 web www.python.jp/doc/release/library/os.path.html#module-os.path
+  2012-04-02 16:18 web www.python.jp/doc/2.4/lib/module-os.path.html
+  2012-04-02 16:18 web www.google.com/search?q=python+os.path
+  2012-04-02 13:49 web www.python.jp/doc/nightly/library/time.html#time.mktime
+  2012-04-02 13:48 web www.google.com/search?q=python+time+mktime
+  2012-04-02 13:39 trash /home/toshihiro/Downloads/tmp1
   ...
 
 Each line means one of following actions: file creation/modification, file removal, web browsing.
