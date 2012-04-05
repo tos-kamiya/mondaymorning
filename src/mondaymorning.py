@@ -337,7 +337,6 @@ def main():
     if optionChromium:
         try:
             tus = get_chromium_history()
-            tus = get_firefox_history()
             uniqueTus = unique_urls(tus)
             items.extend((t, "web", u) for t, u in uniqueTus)
         except sqlite3.OperationalError as e:
