@@ -166,11 +166,9 @@ def normalize_url(url):
         url = m.group(1)
     
     # google search
-    m = re.match("^(www[.]google[.][^/]+/search[?]).*", url)
-    if not m:
-        m = re.match("^(www[.]google[.][^/]+/#).*", url)
-    if not m:
-        m = re.match("^(scholar[.]google[.][^/]+/scholar[?]).*", url)
+    m = re.match("^(www[.]google[.][^/]+/search[?]).*", url) or \
+            re.match("^(www[.]google[.][^/]+/#).*", url) or \
+            re.match("^(scholar[.]google[.][^/]+/scholar[?]).*", url)
     if m:
         r = get_keyvalue_in_url("q", url)
         if r:
