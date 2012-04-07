@@ -265,7 +265,7 @@ def get_chromium_history(truncate_time=None):
     timeUrlList = []
     for t, url in extract_from_db_it(dbFile, query):
         u = normalize_url(url)
-        t = t // 1000000
+        t = t // 10000000
         t = t if truncate_time is None else truncate_time(t)
         timeUrlList.append((t, u))
     return timeUrlList
