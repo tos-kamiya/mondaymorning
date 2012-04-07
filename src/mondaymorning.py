@@ -127,7 +127,7 @@ def get_filesystem_history(target_dirs, truncate_time=None):
 def get_trash_history(truncate_time=None):
     result = []
     pat = re.compile(ur"^(\d+)-(\d+)-(\d+)[ \t]+(\d+):(\d+):(\d+)[ \t]+(.*)")
-    output = subprocess.check_output(["list-trash"])
+    output = subprocess.check_output(["trash-list"])
     for L in output.decode('utf-8').split('\n'):
         m = pat.match(L)
         if m:
