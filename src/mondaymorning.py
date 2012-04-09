@@ -223,7 +223,7 @@ def normalize_url(url):
 def merge_url_by_last_param(L):
     tdfs = []
     for t, url in L:
-        i = url.rfind('&')
+        i = max(map(url.rfind, ('&', '/', '?')))
         if i >= 0:
             d, f = url[:i + 1], url[i + 1:]
             tdfs.append((t, d, f))

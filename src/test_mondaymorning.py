@@ -79,5 +79,25 @@ class Test(unittest.TestCase):
             (1, "http://hoge.com/view=anotheritem&page=2")
         ])
         
+    def test_merge_url_2(self):
+        urls = [
+            (1, "http://hoge.com/foo"), 
+            (1, "http://hoge.com/bar")
+        ]
+        mergedUrls = mm.merge_url_by_last_param(urls)
+        self.assertEqual(mergedUrls, [
+            (1, "http://hoge.com/{foo,bar}")
+        ])
+        
+        urls = [
+            (1, "http://hoge.com/search?q=hoge"), 
+            (1, "http://hoge.com/search?q=fuga")
+        ]
+        mergedUrls = mm.merge_url_by_last_param(urls)
+        self.assertEqual(mergedUrls, [
+            (1, "http://hoge.com/search?{q=hoge,q=fuga}")
+        ])
+
+
 if __name__ == "__main__":
     unittest.main()
