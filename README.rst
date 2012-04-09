@@ -34,8 +34,9 @@ To install depending packages::
 
 The trash-cli package is Gnome Trash-can for command line.
 This package is optional to mondaymorning, however, 
-I recommend to install it and use the 'trash' command in deleting files, instead of 'mv',
-because trash-can enables to track a history of deleted files.
+I recommend to install it and use the 'trash-put' command for deleting files, instead of 'mv',
+because trash-put command enables to track a history of file deleting, while
+mv command doesn't record anything such a traceable data.
 
 ========
 License
