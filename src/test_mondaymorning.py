@@ -42,6 +42,16 @@ class Test(unittest.TestCase):
         
         url = u"""twitter.com/#!/tos_kamiya/123"""
         self.assertEqual(mm.normalize_url(url), u"""twitter.com/tos_kamiya/123""")
+    
+    def test_normalize_url_for_2ch(self):
+        url = u"""uni.2ch.net/test/read.cgi/newsplus/1333782346/-100"""
+        self.assertEqual(mm.normalize_url(url), u"""uni.2ch.net/test/read.cgi/newsplus/1333782346/""")
+        
+        url = u"""uni.2ch.net/test/read.cgi/newsplus/1333782346/100"""
+        self.assertEqual(mm.normalize_url(url), u"""uni.2ch.net/test/read.cgi/newsplus/1333782346/100""")
+
+        url = u"""uni.2ch.net/test/read.cgi/newsplus/1333782346/l50"""
+        self.assertEqual(mm.normalize_url(url), u"""uni.2ch.net/test/read.cgi/newsplus/1333782346/""")
 
     def test_merge_url_by_last_param(self):
         urls = [

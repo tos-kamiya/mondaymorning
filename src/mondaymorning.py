@@ -12,6 +12,7 @@ import subprocess
 import time
 import urllib2
 
+VERSION = (0, 2, 1)
 HOME_DIRECTORY = u"" + os.environ['HOME']
 PROJECT_FILES = (
      u".progject", # Eclipse project 
@@ -216,6 +217,16 @@ def normalize_url(url):
                 return u"twitter.com/" + m.group(1)
         return url
         
+    # 2ch threads
+    if re.match("^[a-z0-9]+[.]2ch[.]net/.*", url):
+        m = re.match(r"(.*/)-\d+$", url) or \
+                re.match(r"(.*/)\d+-\d+$", url) or \
+                re.match(r"(.*/)l\d+$", url)
+        if m:
+            return m.group(1)
+        else:
+            return url
+
     # others
     return url
 
@@ -284,8 +295,6 @@ Opition
   -W: same as -C -F.
   --version: shows version.
 """[1:-1]
-
-VERSION = (0, 2, 0)
 
 
 def main():
