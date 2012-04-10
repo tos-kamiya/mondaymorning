@@ -136,6 +136,9 @@ def get_trash_history(truncate_time=None):
             t = t if truncate_time is None else truncate_time(t)
             path = m.group(7)
             result.append((t, path))
+    result = [(t, normalize_filepath(p)) for t, p in result]
+    result.sort(reverse=True)
+    result = merge_paths_by_directory_structure(result)
     return result
 
 
@@ -287,6 +290,7 @@ Usage: mondaymoring [OPTIONS] <directory>...
   Searches recent working items: the files that you were editing, the urls you were browsing.
 Opition
   -d <num>: duaration. searches histories in num days (3). '-' for infinite.
+  -d [<yy>-]<mm>-<dd>: day. searches histories on the day.
   -s: uses second as time resolution, instead of minute.
   -C: no Chromium history.
   -F: no Firefox history.
@@ -310,6 +314,7 @@ def main():
     optionTrash = True
     timeResolution = 'min'
     duaration = 3
+    day = None
     targetDirs = ['~']
     
     opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hsCFHTW", ["help", "version"])
@@ -321,10 +326,19 @@ def main():
             writefunc(u"mondaymorning %d.%d.%d" % VERSION)
             return
         elif k == "-d":
-            if v == "-":
-                duaration = 0
+            m = re.match(r"(\d+)-(\d+)-(\d+)") or re.match(r"()(\d+)-(\d+)")
+            if m:
+                ymd = [int(m.group(i) or 0) for i in [1, 2, 3]]
+                if ymd[0] == 0:
+                    ymd[0] = time.localtime(time.time()).tm_year
+                duaration = None
+                day = tuple(ymd)
             else:
-                duaration = int(v)
+                day = None
+                if v == "-":
+                    duaration = 0
+                else:
+                    duaration = int(v)
         elif k == "-C":
             optionChromium = False
         elif k == "-F":
