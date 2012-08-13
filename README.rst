@@ -26,8 +26,6 @@ Each line means one of following actions: file creation/modification, file remov
 Installation
 =============
 
-(Mondaymoring is tested on Ubuntu 12.04 beta amd64.)
-
 To install depending packages::
 
   $ sudo apt-get install python python-sqlite trash-cli
@@ -37,6 +35,9 @@ This package is optional to mondaymorning, however,
 I recommend to install it and use the 'trash-put' command for deleting files, instead of 'mv',
 because trash-put command enables to track a history of file deleting, while
 mv command doesn't record anything such a traceable data.
+
+(Mondaymoring is tested by running at command line on Ubuntu 12.04 beta amd64.
+Also, it's unit tests are checked with travis-ci.org, for CPython 2.5, 2.6, and 3.2.)
 
 ========
 License
