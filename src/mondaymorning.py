@@ -15,9 +15,9 @@ import urllib2
 VERSION = (0, 2, 1)
 HOME_DIRECTORY = u"" + os.environ['HOME']
 PROJECT_FILES = (
-     u".progject", # Eclipse project 
-     u"Makefile", # makefile
-     u"build.xml", # Ant
+     u".progject",  # Eclipse project 
+     u"Makefile",  # makefile
+     u"build.xml",  # Ant
 )
 
 
@@ -65,7 +65,7 @@ def normalize_filepath(path):
 
 
 def listdir(directory):
-    try:    
+    try:
         files = os.listdir(directory)
     except OSError:
         return None
@@ -85,7 +85,7 @@ def listdir(directory):
 def get_filesystem_history(target_dirs, truncate_time=None):
     doneDirSet = set()
     timestampTable = {}
-        
+
     def max_timestamp(directory, target):
         if directory in doneDirSet:
             return
@@ -97,7 +97,7 @@ def get_filesystem_history(target_dirs, truncate_time=None):
         for f in fileFnames:
             if f in PROJECT_FILES:
                 target = directory + "*"
-                break # for f
+                break  # for f
         curTarget = target if target else directory
         for f in fileFnames:
             p = os.path.join(directory, f)
@@ -115,10 +115,10 @@ def get_filesystem_history(target_dirs, truncate_time=None):
                     mt = timestampTable.get(curTarget, 0)
                     timestampTable[curTarget] = max(mt, t)
                     max_timestamp(p, target)
-    
+
     for d in target_dirs:
         max_timestamp(d.decode('utf-8'), None)
-    
+
     result = [(mt, normalize_filepath(p)) for p, mt in timestampTable.iteritems()]
     result.sort(reverse=True)
     result = merge_paths_by_directory_structure(result)
@@ -132,7 +132,8 @@ def get_trash_history(truncate_time=None):
     for L in output.decode('utf-8').split('\n'):
         m = pat.match(L)
         if m:
-            t = time.mktime(datetime.datetime(*[int(m.group(i)) for i in range(1, 6 + 1)]).timetuple())
+            values = [int(m.group(i)) for i in range(1, 6 + 1)]
+            t = time.mktime(datetime.datetime(*values).timetuple())
             t = t if truncate_time is None else truncate_time(t)
             path = m.group(7)
             result.append((t, path))
@@ -171,7 +172,7 @@ def normalize_url(url):
     m = re.match("^https?://(.*)", url)
     if m:
         url = m.group(1)
-    
+
     # google search
     m = re.match("^(www[.]google[.][^/]+/search[?]).*", url) or \
             re.match("^(www[.]google[.][^/]+/#).*", url) or \
@@ -182,13 +183,13 @@ def normalize_url(url):
             return m.group(1) + u"&".join(r)
         else:
             return url
-    
+
     # google search result's links
     if re.match("^www[.]google[.][^/]+/url[?].*", url):
         r = get_keyvalue_in_url("url", url)
         if r:
             if len(r) == 1:
-                return r[0][4:] # drop "url="
+                return r[0][4:]  # drop "url="
             return u" ".join(r)
         else:
             return url
@@ -208,7 +209,7 @@ def normalize_url(url):
             return u"www.youtube.com/results?" + u"&".join(r)
         else:
             return url
-    
+
     # twitter
     if re.match("^twitter[.]com", url):
         r = get_keyvalue_in_url("original_referer", url)
@@ -219,7 +220,7 @@ def normalize_url(url):
             if m:
                 return u"twitter.com/" + m.group(1)
         return url
-        
+
     # 2ch threads
     if re.match("^[a-z0-9]+[.]2ch[.]net/.*", url):
         m = re.match(r"(.*/)-\d+$", url) or \
@@ -258,11 +259,13 @@ def merge_url_by_last_param(L):
 
 
 def get_firefox_history(truncate_time=None):
-    dbFileCandidates = glob.glob(os.path.join(HOME_DIRECTORY, 
+    dbFileCandidates = glob.glob(os.path.join(HOME_DIRECTORY,
             ".mozilla/firefox/*.default/places.sqlite"))
     query = u"select last_visit_date, url from moz_places"
+
     def is_valid_row(row):
         return row[0] is not None
+
     timeUrlList = []
     for f in dbFileCandidates:
         for t, url in extract_from_db_it(f, query, is_valid_row):
@@ -287,7 +290,8 @@ def get_chromium_history(truncate_time=None):
 
 USAGE = u"""
 Usage: mondaymoring [OPTIONS] <directory>...
-  Searches recent working items: the files that you were editing, the urls you were browsing.
+  Searches recent working items: the files that you were editing, the urls you
+  were browsing.
 Opition
   -d <num>: duaration. searches histories in num days (3). '-' for infinite.
   -d [<yy>-]<mm>-<dd>: day. searches histories on the day.
@@ -305,10 +309,10 @@ def main():
     import sys
     import codecs
     import getopt
-    
+
     writefunc = codecs.getwriter('utf-8')(sys.stdout).write
     logfunc = codecs.getwriter('utf-8')(sys.stderr).write
-    
+
     optionChromium = True
     optionFirefox = True
     optionTrash = True
@@ -316,8 +320,9 @@ def main():
     duaration = 3
     day = None
     targetDirs = ['~']
-    
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hsCFHTW", ["help", "version"])
+
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hsCFHTW", 
+            ["help", "version"])
     for k, v in opts:
         if k in ("-h", "--help"):
             writefunc(USAGE + u"\n")
@@ -326,7 +331,7 @@ def main():
             writefunc(u"mondaymorning %d.%d.%d" % VERSION)
             return
         elif k == "-d":
-            m = re.match(r"(\d+)-(\d+)-(\d+)") or re.match(r"()(\d+)-(\d+)")
+            m = re.match(r"(\d+)-(\d+)-(\d+)", v) or re.match(r"()(\d+)-(\d+)", v)
             if m:
                 ymd = [int(m.group(i) or 0) for i in [1, 2, 3]]
                 if ymd[0] == 0:
@@ -357,7 +362,7 @@ def main():
     targetDirs.extend(args)
 
     targetDirs = [(HOME_DIRECTORY if d == "~" else d) for d in targetDirs]
-    
+
     items = []
 
     def unique_urls(tus):
@@ -365,17 +370,19 @@ def main():
         for k, g in itertools.groupby(sorted(tus, key=lambda t_u: t_u[1])):
             uniqs.append(g.next())
         return uniqs
-    
+
     if timeResolution == 'min':
         def truncate_time(t):
             return t - time.localtime(t).tm_sec
+
         def format_time(t):
             return time.strftime("%Y-%m-%d %H:%M", time.localtime(t))
     else:
         truncate_time = None
+
         def format_time(t):
             return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(t))
-        
+
     tus = get_filesystem_history(targetDirs, truncate_time=truncate_time)
     uniqueTus = unique_urls(tus)
     items.extend((t, "file", u) for t, u in uniqueTus)
@@ -406,7 +413,7 @@ def main():
     uniqueTus = unique_urls(tus)
     mergedTus = merge_url_by_last_param(sorted(uniqueTus))
     items.extend((t, "web", u) for t, u in mergedTus)
-    
+
     items.sort(reverse=True)
     if duaration and items:
         latestTime = items[0][0]
@@ -414,8 +421,8 @@ def main():
         for i, item in enumerate(items):
             if item[0] <= startingTime:
                 items[:] = items[:i]
-                break # for i
-    
+                break  # for i
+
     for lastItem, item in zip([(None, None, None)] + items, items):
         lastT, lastK, lastU = lastItem
         t, k, u = item
