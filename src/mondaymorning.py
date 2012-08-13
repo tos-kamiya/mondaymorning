@@ -325,7 +325,6 @@ def main():
             ["help", "version"])
     for k, v in opts:
         if k in ("-h", "--help"):
-            writefunc(USAGE + u"\n")
             return
         elif k == "--version":
             writefunc(u"mondaymorning %d.%d.%d" % VERSION)
@@ -413,8 +412,8 @@ def main():
     uniqueTus = unique_urls(tus)
     mergedTus = merge_url_by_last_param(sorted(uniqueTus))
     items.extend((t, "web", u) for t, u in mergedTus)
-
     items.sort(reverse=True)
+
     if duaration and items:
         latestTime = items[0][0]
         startingTime = latestTime - duaration * 24 * 60 * 60
@@ -422,6 +421,10 @@ def main():
             if item[0] <= startingTime:
                 items[:] = items[:i]
                 break  # for i
+    elif day:
+        startingTime = time.mktime(datetime.datetime(*day).timetuple())
+        endingTime = startingTime + 24 * 60 * 60
+        items = [i for i in items if startingTime <= i[0] < endingTime]
 
     for lastItem, item in zip([(None, None, None)] + items, items):
         lastT, lastK, lastU = lastItem
@@ -429,7 +432,6 @@ def main():
         if not (k == lastK and u == lastU):
             if lastU is None or not lastU.startswith(u):
                 writefunc(u"%s %s %s\n" % (format_time(t), k, u))
-
 
 if __name__ == '__main__':
     main()
