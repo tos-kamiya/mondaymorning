@@ -22,6 +22,24 @@ The output will looks like the following::
 
 Each line means one of following actions: file creation/modification, file removal, web browsing.
 
+In the output, a day separating line is inserted where day changed.
+A dayseparating line is a line which starts with '==='. So you can grep it with a pattern '==='::
+
+  $ mondaymorning.py -d 10 | grep -C1 ===
+  2012-08-13 12:19 web togetter.com/li/353759
+  === 2012-08-13
+  2012-08-10 18:11 web www.2nn.jp
+  --
+  2012-08-10 10:20 file ~/workspace/astparsertest/bin
+  === 2012-08-10
+  2012-08-09 20:06 file ~/tmp
+  --
+  2012-08-09 12:46 web goo.gl/{KK8xa,MGRxr}
+  === 2012-08-09
+  2012-08-08 17:45 web every-e.com/special
+  --
+  ...
+
 =============
 Installation
 =============
