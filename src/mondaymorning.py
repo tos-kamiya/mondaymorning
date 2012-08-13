@@ -321,7 +321,7 @@ def main():
     day = None
     targetDirs = ['~']
 
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hsCFHTW", 
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "d:hsCFHTW",
             ["help", "version"])
     for k, v in opts:
         if k in ("-h", "--help"):
@@ -426,12 +426,18 @@ def main():
         endingTime = startingTime + 24 * 60 * 60
         items = [i for i in items if startingTime <= i[0] < endingTime]
 
+    lastYmd = None
     for lastItem, item in zip([(None, None, None)] + items, items):
         lastT, lastK, lastU = lastItem
         t, k, u = item
+        dt = datetime.datetime.fromtimestamp(t)
+        ymd = (dt.year, dt.month, dt.day)
         if not (k == lastK and u == lastU):
+            if lastYmd is not None and lastYmd != ymd:
+                writefunc(u"=== %04d-%02d-%02d\n" % lastYmd)
             if lastU is None or not lastU.startswith(u):
                 writefunc(u"%s %s %s\n" % (format_time(t), k, u))
+        lastYmd = ymd
 
 if __name__ == '__main__':
     main()
