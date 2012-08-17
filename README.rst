@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/tos-kamiya/mondaymorning.png?branch=master)](http://travis-ci.org/tos-kamiya/mondaymorning)
+
 ==============
 mondaymorning
 ==============
