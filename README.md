@@ -1,14 +1,13 @@
-==============
-mondaymorning
-==============
+# mondaymorning
 
 Mondaymoning is a tool to remember what you were doing on last Friday, on Monday morning.
 
 This tool searches and shows histories of home directory, trash can, and web browsing.
 
 To use `mondaymorning`, just type "python mondaymorning.py" at command line.
-The output will looks like the following::
+The output will looks like the following:
 
+```bash
   $ python mondaymorning.py
   2012-04-02 17:22 file ~/bin
   2012-04-02 17:22 file /home/toshihiro
@@ -19,12 +18,14 @@ The output will looks like the following::
   2012-04-02 13:48 web www.google.com/search?q=python+time+mktime
   2012-04-02 13:39 trash /home/toshihiro/Downloads/tmp1
   ...
+```
 
 Each line means one of following actions: file creation/modification, file removal, web browsing.
 
 In the output, a day separating line is inserted where day changed.
-A dayseparating line is a line which starts with '==='. So you can grep it with a pattern '==='::
+A dayseparating line is a line which starts with '==='. So you can grep it with a pattern '===':
 
+```bash
   $ mondaymorning.py -d 10 | grep -C1 ===
   2012-08-13 12:19 web togetter.com/li/353759
   === 2012-08-13
@@ -39,14 +40,15 @@ A dayseparating line is a line which starts with '==='. So you can grep it with 
   2012-08-08 17:45 web every-e.com/special
   --
   ...
+```
 
-=============
-Installation
-=============
+## Installation
 
-To install depending packages::
+To install depending packages:
 
+```bash
   $ sudo apt-get install python python-sqlite trash-cli
+```
 
 The trash-cli package is Gnome Trash-can for command line.
 This package is optional to mondaymorning, however, 
@@ -57,8 +59,6 @@ mv command doesn't record anything such a traceable data.
 (Mondaymoring is tested by running at command line on Ubuntu 12.04 beta amd64.
 Also, it's unit tests are checked with travis-ci.org, for CPython 2.5, 2.6, and 3.2.)
 
-========
-License
-========
+## License
 
 MIT license. ( http://www.opensource.org/licenses/mit-license.html )
