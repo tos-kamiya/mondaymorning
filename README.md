@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/tos-kamiya/mondaymorning.png?branch=master)](http://travis-ci.org/tos-kamiya/mondaymorning)
+
 # mondaymorning
 
 Mondaymoning is a tool to remember what you were doing on last Friday, on Monday morning.
